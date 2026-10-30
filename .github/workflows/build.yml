@@ -1,1 +1,33 @@
+name: Build BlinkSwipe APK v2
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
 
+      - name: 최신 zip 찾아서 풀기
+        run: |
+          ZIP=$(find . -name 'BlinkSwipe_v*.zip' | sort -V | tail -1)
+          echo "사용할 파일: $ZIP"
+          unzip -o "$ZIP" -d work
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: '8.7'
+
+      - name: APK 빌드
+        working-directory: work/BlinkSwipe
+        run: |
+          gradle assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/BlinkSwipe-v1.apk"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          path: BlinkSwipe-v1.apk
+          archive: false
